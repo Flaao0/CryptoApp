@@ -1,19 +1,28 @@
-package com.example.cryptoapp
+package com.example.cryptoapp.presentation
 
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
-import com.example.cryptoapp.api.ApiFactory
-import com.example.cryptoapp.database.AppDatabase
-import com.example.cryptoapp.pojo.CoinPriceInfo
-import com.example.cryptoapp.pojo.CoinPriceInfoRawData
+import com.example.cryptoapp.data.network.api.ApiFactory
+import com.example.cryptoapp.data.database.dao.AppDatabase
+import com.example.cryptoapp.data.database.model.CoinInfoDbModel
+import com.example.cryptoapp.data.pojo.CoinPriceInfo
+import com.example.cryptoapp.data.pojo.CoinPriceInfoRawData
+import com.example.cryptoapp.data.repository.CoinRepositoryImpl
+import com.example.cryptoapp.domain.useCases.GetCoinDetailsUseCase
+import com.example.cryptoapp.domain.useCases.GetCoinInfoListUseCase
 import com.google.gson.Gson
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
 
 class CoinViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val repository = CoinRepositoryImpl(application)
+
+    private val getCoinInfoListUseCase = GetCoinInfoListUseCase(repository)
+    private val getCoinDetailsUseCase = GetCoinDetailsUseCase(repository)
 
     private val db = AppDatabase.getInstance(application)
     private val compositeDisposable = CompositeDisposable()
@@ -30,7 +39,7 @@ class CoinViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun loadData() {
         val disposable = ApiFactory.apiService.getTopCoinsInfo(limit = 50)
-            .map { it.data?.map { it.coinInfo?.name }?.joinToString(",") }
+            .map { it.names?.map { it.coinInfo?.name }?.joinToString(",") }
             .flatMap { ApiFactory.apiService.getFullPriceList(fSyms = it) }
             .map { getPriceListFromRawData(it) }
             .delaySubscription(10, TimeUnit.SECONDS)
@@ -38,7 +47,9 @@ class CoinViewModel(application: Application) : AndroidViewModel(application) {
             .retry()
             .subscribeOn(Schedulers.io())
             .subscribe({
-                db.coinPriceInfoDao().insertPriceList(it)
+                db.coinPriceInfoDao().insertPriceList(
+                    it
+                )
                 Log.d("TEST_OF_LOADING_DATA", "Success: $it")
             }, {
                 Log.d("TEST_OF_LOADING_DATA", "Failure: ${it.message}")
