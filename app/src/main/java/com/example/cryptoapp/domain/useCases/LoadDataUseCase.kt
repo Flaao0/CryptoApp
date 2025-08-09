@@ -6,7 +6,7 @@ class LoadDataUseCase(
     private val repository: CoinRepository
 ) {
 
-    suspend fun loadData() {
+    fun loadData() {
         repository.loadData()
     }
 }

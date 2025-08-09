@@ -3,15 +3,18 @@ package com.example.cryptoapp.data.repository
 import android.app.Application
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.map
+import androidx.work.ExistingWorkPolicy
+import androidx.work.WorkManager
 import com.example.cryptoapp.data.database.dao.AppDatabase
 import com.example.cryptoapp.data.mapper.CoinMapper
 import com.example.cryptoapp.data.network.api.ApiFactory
 import com.example.cryptoapp.domain.entities.CoinInfo
 import com.example.cryptoapp.domain.repository.CoinRepository
+import com.example.cryptoapp.workers.RefreshDataWorker
 import kotlinx.coroutines.delay
 
 class CoinRepositoryImpl(
-    application: Application,
+    private val application: Application,
 ) : CoinRepository {
 
     private val coinInfoDao = AppDatabase.getInstance(
@@ -19,7 +22,6 @@ class CoinRepositoryImpl(
     ).coinPriceInfoDao()
 
     private val mapper = CoinMapper()
-    private val apiService = ApiFactory.apiService
 
     override fun getCoinInfoList(): LiveData<List<CoinInfo>> {
         return coinInfoDao.getPriceList().map {
@@ -35,20 +37,12 @@ class CoinRepositoryImpl(
         }
     }
 
-    override suspend fun loadData() {
-        while (true) {
-            try {
-                val topCoins = apiService.getTopCoinsInfo(limit = 50)
-                val fromSymbols = mapper.mapNamesListToString(topCoins)
-                val jsonContainer = apiService.getFullPriceList(fSyms = fromSymbols)
-                val coinInfoDtoList = mapper.mapJsonContainerToListCoinInfo(jsonContainer)
-                val dbModelList = coinInfoDtoList.map {
-                    mapper.mapDtoToDbModel(it)
-                }
-                coinInfoDao.insertPriceList(dbModelList)
-            } catch (e: Exception) {
-            }
-            delay(10_000)
-        }
+    override fun loadData() {
+        val workManager = WorkManager.getInstance(application)
+        workManager.enqueueUniqueWork(
+            RefreshDataWorker.WORK_NAME,
+            ExistingWorkPolicy.REPLACE,
+            RefreshDataWorker.makeRequest()
+        )
     }
 }
