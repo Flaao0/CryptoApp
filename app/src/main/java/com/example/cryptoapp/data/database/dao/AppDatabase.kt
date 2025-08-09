@@ -25,7 +25,7 @@ abstract class AppDatabase : RoomDatabase() {
                 }
                 val db = Room.databaseBuilder(
                     application, AppDatabase::class.java, DB_NAME
-                ).fallbackToDestructiveMigration().build() // Added fallbackToDestructiveMigration()
+                ).fallbackToDestructiveMigration().build()
                 INSTANCE = db
                 return db
             }
