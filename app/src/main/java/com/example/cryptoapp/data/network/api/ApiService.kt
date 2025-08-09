@@ -1,8 +1,7 @@
 package com.example.cryptoapp.data.network.api
 
-import com.example.cryptoapp.data.network.model.CoinNamesListDto
 import com.example.cryptoapp.data.network.model.CoinInfoJsonContainerDto
-import io.reactivex.Single
+import com.example.cryptoapp.data.network.model.CoinNamesListDto
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -12,14 +11,14 @@ interface ApiService {
     suspend fun getTopCoinsInfo(
         @Query(QUERY_PARAM_API_KEY) apiKey: String = "",
         @Query(QUERY_PARAM_LIMIT) limit: Int = 10,
-        @Query(QUERY_PARAM_TO_SYMBOL) tSym: String = CURRENCY
+        @Query(QUERY_PARAM_TO_SYMBOL) tSym: String = CURRENCY,
     ): CoinNamesListDto
 
     @GET("pricemultifull")
     suspend fun getFullPriceList(
         @Query(QUERY_PARAM_API_KEY) apiKey: String = "",
         @Query(QUERY_PARAM_FROM_SYMBOLS) fSyms: String,
-        @Query(QUERY_PARAM_TO_SYMBOLS) tSyms: String = CURRENCY
+        @Query(QUERY_PARAM_TO_SYMBOLS) tSyms: String = CURRENCY,
     ): CoinInfoJsonContainerDto
 
     companion object {

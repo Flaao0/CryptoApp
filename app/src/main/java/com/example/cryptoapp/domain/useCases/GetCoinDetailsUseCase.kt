@@ -6,8 +6,7 @@ class GetCoinDetailsUseCase(
     private val repository: CoinRepository,
 ) {
 
-    fun getCoinDetail(fromSymbol: String) {
-        repository.getCoinDetails(fromSymbol)
-    }
+    fun getCoinDetail(fromSymbol: String)= repository.getCoinDetails(fromSymbol)
+
 
 }
